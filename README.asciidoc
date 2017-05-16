@@ -1,0 +1,38 @@
+== bash
+
+.bash substitution
+hi="${HEY:-"nothing"}"
+echo $hi --> prints 'nothing'
+HEY='moooore'
+hi="${HEY:-"nothing"}"
+echo $hi --> prints 'moooore'
+
+
+.bash check integer
+link:https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash#3951175[topic on stackoverflow]
+. using if
+re='^[0-9]+$'
+if ! [[ $yournumber =~ $re ]] ; then
+   echo "error: Not a number" >&2; exit 1
+fi
+If the value is not necessarily an integer, consider amending the regex appropriately; for instance:
+
+^[0-9]+([.][0-9]+)?$
+...or, to handle negative numbers:
+
+^-?[0-9]+([.][0-9]+)?$
+
+
+link:https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash#3951175[topic on stackoverflow]
+. using case (idiomatic)
+Without bashisms (works even in the System V sh),
+
+case $string in
+    ''|*[!0-9]*) echo bad ;;
+    *) echo good ;;
+esac
+This rejects empty strings and strings containing non-digits, accepting everything else.
+
+Negative or floating-point numbers need some additional work. An idea is to exclude - / . in the first "bad" pattern and add more "bad" patterns containing the inappropriate uses of them (?*-* / *.*.*)
+
+
