@@ -1,5 +1,170 @@
 == bash
 
+=== read from a file line by line
+[source, bash]
+----
+filename='/sys/class/backlight/intel_backlight/max_brightness'
+
+while  IFS='' read -r line || [[ -n "$line" ]]
+do
+  echo "max brightness: $line"
+done < "$filename"
+
+#  IFS=''
+
+# -r  Do not treat a backslash character in any special way. Consider each
+#    backslash to be part of the input line.
+
+# || [[ -n $line ]] prevents the last line from being ignored if it doesn't end with a \n (since read returns a non-zero exit code when it encounters EOF).
+
+----
+
+.arrays
+link:http://www.linuxjournal.com/content/bash-arrays[source]
+[source, bash]
+----
+arr=(Hello World)
+
+# assigning individual itemsis possible
+arr[0]=Hello
+arr[1]=World
+
+#referring to array items
+echo ${arr[0]} ${arr[1]}
+
+${arr[*]}         # All of the items in the array
+${!arr[*]}        # All of the indexes in the array
+${#arr[*]}        # Number of items in the array
+${#arr[0]}        # Length of item zero
+
+----
+
+#!/bin/bash
+
+array=(one two three four [5]=five)
+
+echo "Array size: ${#array[*]}"
+
+echo "Array items:"
+for item in ${array[*]}
+do
+    printf "   %s\n" $item
+done
+
+echo "Array indexes:"
+for index in ${!array[*]}
+do
+    printf "   %d\n" $index
+done
+
+echo "Array items and indexes:"
+for index in ${!array[*]}
+do
+    printf "%4d: %s\n" $index ${array[$index]}
+done
+
+Running it produces the following output:
+
+Array size: 5
+Array items:
+   one
+   two
+   three
+   four
+   five
+Array indexes:
+   0
+   1
+   2
+   3
+   5
+Array items and indexes:
+   0: one
+   1: two
+   2: three
+   3: four
+   5: five
+
+
+
+ Note that the "@" sign can be used instead of the "*" in constructs such as ${arr[*]}, the result is the same except when expanding to the items of the array within a quoted string. In this case the behavior is the same as when expanding "$*" and "$@" within quoted strings: "${arr[*]}" returns all the items as a single word, whereas "${arr[@]}" returns each item as a separate word.
+
+The following example shows how unquoted, quoted "*", and quoted "@" affect the expansion (particularly important when the array items themselves contain spaces):
+
+#!/bin/bash
+
+array=("first item" "second item" "third" "item")
+
+echo "Number of items in original array: ${#array[*]}"
+for ix in ${!array[*]}
+do
+    printf "   %s\n" "${array[$ix]}"
+done
+echo
+
+arr=(${array[*]})
+echo "After unquoted expansion: ${#arr[*]}"
+for ix in ${!arr[*]}
+do
+    printf "   %s\n" "${arr[$ix]}"
+done
+echo
+
+arr=("${array[*]}")
+echo "After * quoted expansion: ${#arr[*]}"
+for ix in ${!arr[*]}
+do
+    printf "   %s\n" "${arr[$ix]}"
+done
+echo
+
+arr=("${array[@]}")
+echo "After @ quoted expansion: ${#arr[*]}"
+for ix in ${!arr[*]}
+do
+    printf "   %s\n" "${arr[$ix]}"
+done
+
+When run it outputs:
+
+Number of items in original array: 4
+   first item
+   second item
+   third
+   item
+
+After unquoted expansion: 6
+   first
+   item
+   second
+   item
+   third
+   item
+
+After * quoted expansion: 1
+   first item second item third item
+
+After @ quoted expansion: 4
+   first item
+   second item
+   third
+   item
+
+.associative arrays
+* problem:
+test=(["name"]="gerald")
+echo "${test[0]}" : gerald
+echo "${test[name]}" : gerald
+echo "${test[nam3e]}" : gerald ???
+
+* solution: *declare an associative array*
+declare -A test
+test=(["name"]="gerald")
+	# delcare -A test=(["name"]="gerald")
+echo "${test[0]}" : gerald
+echo "${test[name]}" : gerald
+echo "${test[nam3e]}" :  <- empty
+
 .bash substitution
 hi="${HEY:-"nothing"}"
 echo $hi --> prints 'nothing'
@@ -34,5 +199,3 @@ esac
 This rejects empty strings and strings containing non-digits, accepting everything else.
 
 Negative or floating-point numbers need some additional work. An idea is to exclude - / . in the first "bad" pattern and add more "bad" patterns containing the inappropriate uses of them (?*-* / *.*.*)
-
-
